@@ -1,0 +1,19 @@
+#! /bin/bash
+
+JULIA_PATH=/usr/local/julia
+JULIA_DEPOT_PATH=/usr/local/.julia
+
+v=($(echo $JULIA_VERSION | tr "." " "))
+JULIA_SHORT=${v[0]}.${v[1]}
+
+echo "Installing Julia {$JULIA_VERSION}..."
+
+mkdir -p ${JULIA_PATH}
+
+curl -k -o julia.tar.gz https://julialang-s3.julialang.org/bin/linux/x64/${JULIA_SHORT}/julia-${JULIA_VERSION}-linux-x86_64.tar.gz
+
+tar -xzf julia.tar.gz -C "$JULIA_PATH" --strip-components 1
+
+rm julia.tar.gz
+
+ln -s ${JULIA_PATH}/bin/julia /usr/bin/julia

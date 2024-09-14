@@ -1,0 +1,65 @@
+// See https://github.com/julia-vscode/julia-devcontainer/blob/master/Dockerfile for image contents
+{
+	"name": "julia-dev-container",
+	"build": { 
+		"dockerfile": "Dockerfile",
+		"args":{
+			"BUILDKIT_INLINE_CACHE": "0",
+			"DOCKER_BUILDKIT": "0"
+		}},
+
+	// 'features' are just somebody else's install scripts...
+	"features":{
+    	"ghcr.io/iterative/features/nvtop:1": {},
+		"ghcr.io/devcontainers/features/aws-cli:1": {},
+		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+		"ghcr.io/devcontainers/features/git:1": {},
+		"ghcr.io/devcontainers/features/common-utils:2": {}
+	},
+
+	// Configure tool-specific properties.
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+			// Add the IDs of extensions you want installed when the container is created.
+			"extensions": [
+				"julialang.language-julia",
+				"mhutchie.git-graph",
+				"iterative.dvc",
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+				"donjayamanne.python-environment-manager",
+				"wayou.vscode-todo-highlight",
+				"ms-toolsai.jupyter",
+				"databricks.databricks",
+				"ms-azuretools.vscode-docker",
+				"AmazonWebServices.aws-toolkit-vscode",
+				"donjayamanne.githistory",
+				"GitHub.vscode-github-actions",
+				"GitHub.vscode-pull-request-github",
+				"phplasma.csv-to-table"
+			]
+		}
+	},
+	// access AWS profiles and docker
+	"mounts": [
+		"source=${localEnv:HOME}${localEnv:USERPROFILE}/.aws,target=/home/vscode/.aws,type=bind,consistency=cached",
+		"source=//var/run/docker.sock,target=/var/run/docker.sock,type=bind",
+		"source=${localEnv:HOME}${localEnv:USERPROFILE}/.databrickscfg,target=/home/vscode/.databrickscfg,type=bind",
+		"source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached",
+		"source=${localEnv:HOME}${localEnv:USERPROFILE}/projects,target=/home/projects,readonly,type=bind"
+	],
+
+	"postCreateCommand": "bash .devcontainer/scripts/postCreate.sh",
+
+	"postStartCommand": "bash .devcontainer/scripts/postStart.sh",
+
+	"remoteEnv": {
+		"GITHUB_TOKEN":"${localEnv:GITHUB_TOKEN}",
+		"AWS_PROFILE":"${localEnv:AWS_PROFILE}",
+		"AWS_ACCOUNT":"${localEnv:AWS_ACCOUNT}",
+		"PROJECT_FOLDER":"${containerWorkspaceFolderBasename}",
+		"JULIA_VERSION": "1.10.3",
+		"USERNAME":"vscode"
+	}
+}
