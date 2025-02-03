@@ -1,0 +1,9 @@
+data/
+data.dvc
+dvclive/
+.vscode/
+.dvc/
+.devcontainer/
+dvc.yaml
+.dvcignore
+src/scratch.jl

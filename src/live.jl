@@ -1,14 +1,15 @@
 using Logging
 using YAML
 using JSON
+using UUIDs
 
 const MetricLevel = AboveMaxLevel + 1
 const ParamLevel = MetricLevel + 1
 const ParamsLevel = ParamLevel + 1
 const ArtifactLevel = ParamsLevel + 1
+const StatusLevel = ArtifactLevel + 1
 
-
-mutable struct DvcLiveLogger <: AbstractLogger
+mutable struct LiveLogger <: AbstractLogger
     dir::String
     resume::Bool
     dvcyaml::Union{String,Nothing}
@@ -18,21 +19,31 @@ mutable struct DvcLiveLogger <: AbstractLogger
     step::Int
     metrics::Dict{Any,Any}
     params::Dict{Any,Any}
+    artifacts::Dict{Any,Any}
 end
 
-DvcLiveLogger(;dir="dvclive",resume=false, dvcyaml="dvc.yaml", save_dvc_exp=true)=DvcLiveLogger(dir, resume, dvcyaml, save_dvc_exp, nothing, nothing, 1, Dict(),Dict());
+function LiveLogger(;dir="dvclive",resume=false, dvcyaml="dvc.yaml", save_dvc_exp=true)
+    
+    lg = LiveLogger(dir, resume, dvcyaml, save_dvc_exp, nothing, nothing, 1, Dict(),Dict(),Dict());
+    if resume===true
+        resume!(lg)
+    end
+
+    lg
+end
+
 
 metrics_plot_dir(logger) = joinpath(logger.dir,"plots","metrics")
 
 function check_metrics_plot_dir(logger)
+    check_dir_exists(logger)
     _plot_dir = metrics_plot_dir(logger)
     !isdir(_plot_dir) && mkpath(_plot_dir)
 
     return _plot_dir
 end
 
-# create the metric file for plotting if not exist and not continue
-# one for each metric?
+
 function metric_plot_file(logger, metric, ftype="tsv") 
 
     _plot_dir = check_metrics_plot_dir(logger)
@@ -55,9 +66,9 @@ function metric_plot_file(logger, metric, ftype="tsv")
 end;
 
 
-Logging.shouldlog(logger::DvcLiveLogger, level, args...)= true
+Logging.shouldlog(logger::LiveLogger, level, args...)= true
 
-Logging.min_enabled_level(logger::DvcLiveLogger) = MetricLevel
+Logging.min_enabled_level(logger::LiveLogger) = MetricLevel
 
 function next_step!(logger)
 
@@ -70,8 +81,10 @@ end
 
 function make_dvcyaml(logger)
 
+    check_dir_exists(logger)
+
     dvcyaml = Dict()
-    
+
     dvcyaml["params"] = [joinpath(logger.dir,"params.yaml")]
     dvcyaml["metrics"] = [joinpath(logger.dir,"metrics.json")]
 
@@ -80,31 +93,24 @@ function make_dvcyaml(logger)
 
     dvcyaml["plots"] = [dvcyaml_plots]
 
+    dvcyaml["artifacts"] = logger.artifacts
+
     YAML.write_file("dvc.yaml", dvcyaml)
+    
+    return nothing
 
 end
 
 function make_summary(logger)
 
-    summ = Dict()
-    summ["step"] = logger.step
-
-    for (k,v) in pairs(logger.metrics)
-        ksplit = split(k,"/")
-        dke = build_nested_dict(ksplit,v)
-        merge!(summ, dke)
-    end
-
-    jfile = joinpath(logger.dir,"metrics.json")
-    open(jfile, "w") do f
-        JSON.print(f, summ)
-    end
+    save_params(logger)
+    save_metrics(logger)
 
     return nothing
 
 end
 
-function update_metric!(logger, name, value)
+function update_metrics!(logger, name, value)
 
     logger.metrics[name] = value
 
@@ -112,7 +118,29 @@ function update_metric!(logger, name, value)
 
 end
 
-function update_param!(logger, name, value)
+function resume!(logger)
+
+    try
+        jfile = joinpath(logger.dir,"metrics.json")
+        open(jfile, "r") do f
+            logger.metrics = JSON.parse(f)
+            logger.step = get(logger.metrics,"steps",0)
+        end
+    catch
+        @warn "No metrics file found."
+    end
+
+    try
+        dvcyaml = YAML.load_file("dvc.yaml")
+        logger.artifacts = get(dvcyaml,"artifacts",Dict())
+    catch
+        @warn "No dvc.yaml file found."
+    end
+
+    return nothing
+end
+
+function update_params!(logger, name, value)
 
     logger.params[name] = value
 
@@ -128,40 +156,80 @@ function update_params!(logger, p::Dict)
     return nothing
 end
 
-function save_params(logger)
+function update_artifacts!(logger, path; kwargs...)
 
-    pfile = joinpath(logger.dir,"params.yaml")
-    YAML.write_file(pfile, logger.params)
+    kw = Dict(kwargs)
+
+    name = get(kw,:name,string(uuid4()))
+    desc = get(kw, :desc, "")
+    type = get(kw, :type, "")
+    labels = get(kw, :labels, [])
+    meta = get(kw, :meta, Dict())
+
+    art = Dict()
+    art[name] = Dict(
+        "path" => path,
+        "desc" => desc,
+        "type" => type,
+        "labels" => labels isa Vector ? labels : [labels],
+        "meta" => meta
+    )
+
+    merge!(logger.artifacts, art)
+
+    return nothing
 
 end
 
-function save_dvc_exp(logger)
+function check_dir_exists(logger)
+    ispath(logger.dir) || mkdir(logger.dir)
+end
 
-    if isnothing(logger.exp_name)
-        cmd = `dvc exp save`
-    else
-        cmd = `dvc exp save -n $(logger.exp_name)`
+function save_params(logger)
+
+    check_dir_exists(logger)
+
+    pfile = joinpath(logger.dir,"params.yaml")
+
+    isfile(pfile) || touch(pfile)
+    
+    YAML.write_file(pfile, logger.params)
+    return nothing
+end
+
+function save_metrics(logger)
+
+    check_dir_exists(logger)
+
+    summ = Dict()
+    summ["steps"] = logger.step
+
+    temp = []
+    for (k,v) in pairs(logger.metrics)
+        ksplit = split(k,"/")
+        dke = build_nested_dict(ksplit,v)
+        push!(temp, dke)
     end
 
-    run(cmd)
+    mtemp = recursive_merge(temp...)
+    merge!(summ, mtemp)
+
+    jfile = joinpath(logger.dir,"metrics.json")
+    open(jfile, "w") do f
+        JSON.print(f, summ)
+    end
 
 end
 
 current_step(logger)=logger.step;
 
-
-function build_nested_dict(keys, value)
-    if length(keys) == 1
-        return Dict(keys[1] => value)
-    else
-        return Dict(keys[1] => build_nested_dict(keys[2:end], value))
-    end
-end;
-
 function end_live(logger)
 
+    make_dvcyaml(logger)
+    make_summary(logger)
+
     if logger.save_dvc_exp
-        save_dvc_exp(logger)
+        dvc_exp_save(logger)
     end
 
     return nothing
