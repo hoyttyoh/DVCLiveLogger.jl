@@ -7,3 +7,5 @@ dvclive/
 dvc.yaml
 .dvcignore
 src/scratch.jl
+notebooks/
+.gitignore
