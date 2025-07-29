@@ -2,7 +2,7 @@
 
 julia_version = "1.10.5"
 manifest_format = "2.0"
-project_hash = "540c0e10c2b11fb9dbd76f099f50df12cc08ed15"
+project_hash = "fb5e36e350d811b1a09c5fec8c13cd20feb66244"
 
 [[deps.Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
@@ -24,6 +24,12 @@ version = "4.16.0"
 deps = ["Printf"]
 uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
 
+[[deps.ExpectationStubs]]
+deps = ["MacroTools", "Test"]
+git-tree-sha1 = "29ff679df0dfd5674329db705f893849e86c74c1"
+uuid = "cd0106a6-6d98-567f-99b2-156dd1635c57"
+version = "0.3.0"
+
 [[deps.ExprTools]]
 git-tree-sha1 = "27415f162e6028e81c72b82ef756bf321213b6ec"
 uuid = "e2ba6199-217a-4e67-a87a-7c52f15ade04"
@@ -35,6 +41,11 @@ uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 
 [[deps.Logging]]
 uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
+
+[[deps.MacroTools]]
+git-tree-sha1 = "72aebe0b5051e5143a079a4685a46da330a40472"
+uuid = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
+version = "0.5.15"
 
 [[deps.Markdown]]
 deps = ["Base64"]

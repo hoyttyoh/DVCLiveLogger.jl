@@ -1,11 +1,26 @@
 
-@testset "Test logger" begin
-    lg = LiveLogger()
+using Mocking
+
+@testset "Test logger init" begin
+
+    Mocking.activate()
+
+    p1 = @patch DVCLiveLogger.make_dvcyaml(x::LiveLogger)=nothing
+    p2 = @patch DVCLiveLogger.make_summary(x::LiveLogger)=nothing
     
-    @test lg.step == 1
+    apply([p1,p2]) do
+        lg = LiveLogger()
 
-    next_step!(lg)
+        @test lg.step == 1
 
-    @test lg.step == 2
+        next_step!(lg)
+
+        @test lg.step == 2
+
+        @test lg.resume == false
+        
+    end
+
+
 
 end
