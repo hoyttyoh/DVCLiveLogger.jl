@@ -1,9 +1,4 @@
 
-# `recursive_merge` originally posted by MilesCranmer on Julia Discourse
-# https://discourse.julialang.org/t/multi-layer-dict-merge/27261/7
-recursive_merge(x::AbstractDict...)= merge(recursive_merge, x...)
-recursive_merge(x::AbstractVector...) = cat(x...; dims=1)
-recursive_merge(x...) = x[end]
 
 """
     build_nested_dict(keys::Vector{String}, value::Any)

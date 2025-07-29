@@ -3,14 +3,69 @@
 using CSV
 using Base: CoreLogging
 
+"""
+    @mock exs...
+
+Log a metric value.
+
+## Examples
+
+```julia
+julia> @metric "x" 1.0
+```    
+"""
 macro metric(exs...) dvc_code((CoreLogging.@_sourceinfo)...,:MetricLevel, exs...) end;
 
+"""
+    @param exs...
+
+Log an experiment parameter.
+
+## Examples
+
+```julia
+julia> @param "epochs" 200
+```
+"""
 macro param(exs...) dvc_code((CoreLogging.@_sourceinfo)...,:ParamLevel, exs...) end;
 
+"""
+    @params exs...
+
+Log multiple parameters.
+
+## Examples
+
+```julia
+julia> @params lr=0.001 epochs=200
+```
+"""
 macro params(exs...) dvc_code((CoreLogging.@_sourceinfo)...,:ParamsLevel, exs...) end;
 
+"""
+    @artifact exs...
+
+Log an experiment artifact.
+
+## Example
+
+```julia
+julia> @artifact "model.keras" name="test_model" desc="Example" labels=["v0.1.0", "test"]
+```
+"""
 macro artifact(exs...) dvc_code((CoreLogging.@_sourceinfo)...,:ArtifactLevel, exs...) end;
 
+"""
+    @status exs...
+
+Print a status message to the terminal. Useful for period output you don't want logged.
+
+## Example
+
+```julia
+julia> @status "Epoch results:"
+```
+"""
 macro status(exs...) dvc_code((CoreLogging.@_sourceinfo)...,:StatusLevel, exs...) end;
     
 
@@ -67,6 +122,7 @@ end
 function show_status(msg)
     println(msg)
 end
+
 
 function log_metric(logger::LiveLogger, name, value; kwargs...)
 

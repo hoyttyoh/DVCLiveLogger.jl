@@ -2,6 +2,7 @@ using Logging
 using YAML
 using JSON
 using UUIDs
+using Mocking: @mock
 
 const MetricLevel = AboveMaxLevel + 1
 const ParamLevel = MetricLevel + 1
@@ -72,13 +73,17 @@ Logging.min_enabled_level(logger::LiveLogger) = MetricLevel
 
 function next_step!(logger)
 
-    make_summary(logger)
-    make_dvcyaml(logger)
+    @mock make_summary(logger)
+    @mock make_dvcyaml(logger)
 
     logger.step+=1
 
 end
+"""
+    make_dvcyaml(logger)
 
+Write `dvc.yaml` to file.
+"""  
 function make_dvcyaml(logger)
 
     check_dir_exists(logger)
@@ -101,6 +106,11 @@ function make_dvcyaml(logger)
 
 end
 
+"""
+    make_summary(logger)
+
+Write `params.yaml` and `metrics.json` to the `dvclive` directory.
+""" 
 function make_summary(logger)
 
     save_params(logger)
@@ -211,8 +221,8 @@ function save_metrics(logger)
         push!(temp, dke)
     end
 
-    mtemp = recursive_merge(temp...)
-    merge!(summ, mtemp)
+    mtemp = merge.(temp)
+    merge!(summ, mtemp...)
 
     jfile = joinpath(logger.dir,"metrics.json")
     open(jfile, "w") do f
@@ -223,6 +233,14 @@ end
 
 current_step(logger)=logger.step;
 
+"""
+    end_live(logger)
+
+End the `DVCLive` logging.
+
+Creates a summary and 
+
+"""
 function end_live(logger)
 
     make_dvcyaml(logger)
