@@ -222,7 +222,7 @@ function save_metrics(logger)
     end
 
     mtemp = mergewith(merge, temp...)
-    merge!(summ, mtemp...)
+    merge!(summ, mtemp)
 
     jfile = joinpath(logger.dir,"metrics.json")
     open(jfile, "w") do f
