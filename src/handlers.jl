@@ -58,7 +58,7 @@ macro artifact(exs...) dvc_code((CoreLogging.@_sourceinfo)...,:ArtifactLevel, ex
 """
     @status exs...
 
-Print a status message to the terminal. Useful for period output you don't want logged.
+Print a status message to the terminal. Useful for periodic output you don't want logged.
 
 ## Example
 
@@ -129,7 +129,7 @@ function log_metric(logger::LiveLogger, name, value; kwargs...)
     update_metrics!(logger, name, value)
 
     plot = get(Dict(kwargs),:plot,true)
-    mplotf = metric_plot_file(logger, name)
+    mplotf = plot && metric_plot_file(logger, name)
 
     if plot===true
         delim = "\t"

@@ -131,6 +131,15 @@ end
 function resume!(logger)
 
     try
+        pfile = joinpath(logger.dir,"params.yaml")
+        open(pfile, "r") do f
+            logger.params = YAML.load(f)
+        end
+    catch
+        @warn "No params file found."
+    end
+
+    try
         jfile = joinpath(logger.dir,"metrics.json")
         open(jfile, "r") do f
             logger.metrics = JSON.parse(f)
