@@ -86,8 +86,12 @@ Write `dvc.yaml` to file.
 """  
 function make_dvcyaml(logger)
 
-    check_dir_exists(logger)
+    if logger.dvcyaml === nothing
+        return nothing
+    end
 
+    !isdir(dirname(logger.dvcyaml)) && mkpath(dirname(logger.dvcyaml))
+    
     dvcyaml = Dict()
 
     dvcyaml["params"] = [joinpath(logger.dir,"params.yaml")]
@@ -100,7 +104,7 @@ function make_dvcyaml(logger)
 
     dvcyaml["artifacts"] = logger.artifacts
 
-    YAML.write_file("dvc.yaml", dvcyaml)
+    YAML.write_file(logger.dvcyaml, dvcyaml)
     
     return nothing
 
