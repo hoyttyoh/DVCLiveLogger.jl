@@ -154,8 +154,12 @@ function resume!(logger)
     end
 
     try
-        dvcyaml = YAML.load_file("dvc.yaml")
-        logger.artifacts = get(dvcyaml,"artifacts",Dict())
+        if isnothing(logger.dvcyaml)
+            @debug "No dvc.yaml file specified."
+        else
+            dvcyaml = YAML.load_file(logger.dvcyaml)
+            logger.artifacts = get(dvcyaml,"artifacts",Dict())
+        end
     catch
         @warn "No dvc.yaml file found."
     end
